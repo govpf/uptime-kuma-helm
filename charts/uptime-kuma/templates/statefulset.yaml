@@ -7,9 +7,7 @@ metadata:
     {{- include "uptime-kuma.labels" . | nindent 4 }}
 spec:
   serviceName: {{ include "uptime-kuma.fullname" . }}
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "uptime-kuma.selectorLabels" . | nindent 6 }}
@@ -50,7 +48,7 @@ spec:
             - name: http
               containerPort: 3001
               protocol: TCP
-          {{ if .Values.volume.enabled -}}
+          {{ if .Values.persistence.enabled -}}
           volumeMounts:
             - mountPath: /app/data
               name: storage
@@ -70,6 +68,18 @@ spec:
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds}}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if or (eq .Values.persistence.enabled true) (eq .Values.extraVolumeMounts) }}
+          volumeMounts:
+            - mountPath: /app/data
+              name: storage
+            {{- with .Values.extraVolumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{ end }}
+          {{ end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -82,18 +92,15 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  {{ if .Values.volume.enabled -}}
+  {{- if .Values.persistence.enabled}}
   volumeClaimTemplates:
     - metadata:
         name: storage
       spec:
-        accessModes:
-          - {{ .Values.volume.accessMode }}
+        accessModes: {{ .Values.persistence.accessModes }}
+        storageClassName: {{ .Values.persistence.storageClassName }}
         resources:
           requests:
-            storage: {{ .Values.volume.size }}
-        {{- with .Values.volume.storageClassName }}
-        storageClassName: {{ . }}
-        {{- end }}
-  {{- end -}}
+            storage: {{ .Values.persistence.size }}
+  {{- end }}
 {{- end -}}

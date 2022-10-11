@@ -2,7 +2,14 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
+# -- Array of extra K8s manifests to deploy
+extraObjects: []
+  # - apiVersion: v1
+  #   kind: ConfigMap
+  #   metadata:
+  #     name: uptime-kuma-certs
+  #   data:
+  #     ca.crt: XXXX
 
 image:
   repository: louislam/uptime-kuma
@@ -14,12 +21,9 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-# If this option is set to false a StateFulset instead of a Deployment is used
-useDeploy: true
-
 serviceAccount:
   # Specifies whether a service account should be created
-  create: false
+  create: true
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
@@ -33,9 +37,28 @@ podEnv:
   # a default port must be set. required by container
   - name: "UPTIME_KUMA_PORT"
     value: "3001"
+  # Add your root CA to enable uptime-kuma to check your intranet sites
+  # - name: NODE_EXTRA_CA_CERTS
+  #   value: /certs/ca.crt
 
 podSecurityContext: {}
   # fsGroup: 2000
+
+persistence:
+  enabled: true
+  accessModes: ReadWriteOnce
+  # storageClassName:
+  size: 4Gi
+
+volumes: []
+  # - configMap:
+  #     defaultMode: 420
+  #     name: uptime-kuma-certs
+  #   name: certs
+extraVolumeMounts: []
+  # - mountPath: /certs/ca.crt
+  #   name: certs
+  #   subPath: ca.crt
 
 securityContext: {}
   # capabilities:
@@ -52,7 +75,7 @@ service:
 
 ingress:
   enabled: false
-  # className: ""
+  className: ""
   extraLabels: {}
     # vhost: uptime-kuma.company.corp
   annotations:
@@ -77,12 +100,10 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
-
-  tls:
-    []
-    # - secretName: chart-example-tls
-    #   hosts:
-    #     - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -96,19 +117,6 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-
 livenessProbe:
   timeoutSeconds: 2
   initialDelaySeconds: 15
@@ -116,15 +124,8 @@ livenessProbe:
 readinessProbe:
   initialDelaySeconds: 5
 
-volume:
-  enabled: true
-  accessMode: ReadWriteOnce
-  size: 4Gi
-  # If you want to use a storage class other than the default, uncomment this
-  # line and define the storage class name
-  # storageClassName:
-  # Reuse your own pre-existing PVC.
-  existingClaim: {}
+nodeSelector: {}
 
-strategy:
-  type: Recreate
+tolerations: []
+
+affinity: {}
