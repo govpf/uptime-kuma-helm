@@ -2,7 +2,7 @@ apiVersion: v2
 name: uptime-kuma
 description: A self-hosted Monitoring tool like "Uptime-Robot".
 type: application
-version: 3.0.0
+version: 3.0.1
 home: https://github.com/govpf/uptime-kuma-helm
 icon: https://raw.githubusercontent.com/louislam/uptime-kuma/master/public/icon.png
 maintainers:
